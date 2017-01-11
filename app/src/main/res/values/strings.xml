@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">MoiveApp</string>
+    <string name="title_activity_detail">Details</string>
+    <string name="refresh">Refresh</string>
+    <string name="title_activity_settings">Setting</string>
+    <string name="pref_popular">popular</string>
+    <string name="pref_top_rated">top_rated</string>
+    <string name="pref_label">Setting</string>
+    <string name="pref_popular_name">Ordering by popular</string>
+    <string name="pref_top_rated_name">Ordering by top rate</string>
+    <string name="pref_key">Ordering</string>
+</resources>
