@@ -118,7 +118,7 @@ public class FetchMovieTask extends AsyncTask<String, Void, MovieData[]> {
             movieJsonStr = buffer.toString();
 
         } catch (IOException e) {
-            Log.e(LOG_TAG, "Error", e);
+            Log.e(LOG_TAG, "Error ", e);
 
             movieJsonStr = null;
         } finally {
@@ -129,7 +129,7 @@ public class FetchMovieTask extends AsyncTask<String, Void, MovieData[]> {
                 try {
                     reader.close();
                 } catch (final IOException e) {
-                    Log.e(LOG_TAG, "Error closing stream", e);
+                    Log.e(LOG_TAG, "Error closing stream ", e);
                 }
             }
         }
