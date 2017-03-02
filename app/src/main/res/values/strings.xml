@@ -3,6 +3,7 @@
     <string name="title_activity_detail">Details</string>
     <string name="refresh">Refresh</string>
     <string name="title_activity_settings">Setting</string>
+    <string name="title_activity_collection">Collection</string>
     <string name="pref_popular">popular</string>
     <string name="pref_top_rated">top_rated</string>
     <string name="pref_label">Setting</string>
@@ -10,4 +11,9 @@
     <string name="pref_top_rated_name">Ordering by top rate</string>
     <string name="pref_key">Ordering</string>
     <string name="action_settings">Setting bar</string>
+    <string name="pref_collection">collection</string>
+    <string name="player_error">Error initializing YouTube player: %s</string>
+    <string name="seek_to">Jump To</string>
+    <string name="seek_to_hint">Seconds</string>
+    <string name="collection">Collection List</string>
 </resources>

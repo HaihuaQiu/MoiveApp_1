@@ -2,14 +2,12 @@ package com.example.android.moiveapp;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.ShareActionProvider;
+import android.view.MenuItem;
 
-/**
- * Created by QHH on 2017/1/7.
- */
+
 
 public class DetailActivity extends AppCompatActivity {
-    private ShareActionProvider mShareActionProvider;
+    private final String DETAILFRAGMENT_TAG = "FFTAG";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,8 +15,19 @@ public class DetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_detail);
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new DetailFragment())
+                    .add(R.id.container, new DetailFragment(), DETAILFRAGMENT_TAG)
                     .commit();
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                finish();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

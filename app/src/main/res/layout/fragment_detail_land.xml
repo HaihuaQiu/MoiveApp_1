@@ -57,6 +57,18 @@
                     android:layout_height="wrap_content"
                     android:textSize="@dimen/text_size_14"
                     tools:text="Titanic2" />
+                <TextView
+                    android:id="@+id/time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/text_size_20"
+                    tools:text="Titanic4" />
+
+                <Button
+                    android:id="@+id/button_collection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="collection" />
 
                 <TextView
                     android:id="@+id/overview"
@@ -68,5 +80,46 @@
             </LinearLayout>
         </LinearLayout>
 
+        <FrameLayout
+            android:id="@+id/youtube_layout_one"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="16dp"
+            android:visibility="visible" />
+
+        <TextView
+            android:id="@+id/review_one"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textSize="@dimen/text_size_14"
+            tools:text="Titanic5" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#000" />
+
+        <TextView
+            android:id="@+id/review_two"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textSize="@dimen/text_size_14"
+            tools:text="Titanic6" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#000" />
+
+        <TextView
+            android:id="@+id/review_three"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textSize="@dimen/text_size_14"
+            tools:text="Titanic7" />
     </LinearLayout>
 </ScrollView>
