@@ -2,6 +2,7 @@ package com.example.android.moiveapp;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -101,8 +102,10 @@ public class FetchMovieTask extends AsyncTask<Void, Void, Void> {
             if (cVVector.size() > 0) {
                 ContentValues[] cvArray = new ContentValues[cVVector.size()];
                 cVVector.toArray(cvArray);
-                inserted = mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
-
+                Cursor cur = mContext.getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, null, null, null);
+                if (cur.getCount() < 40) {
+                    inserted = mContext.getContentResolver().bulkInsert(MovieContract.MovieEntry.CONTENT_URI, cvArray);
+                }
             }
 
             Log.d(LOG_TAG, "FetchMovieTask Complete. " + inserted + " Inserted");

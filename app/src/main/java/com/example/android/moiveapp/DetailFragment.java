@@ -6,30 +6,23 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.android.moiveapp.data.MovieContract;
-import com.google.android.youtube.player.YouTubeInitializationResult;
-import com.google.android.youtube.player.YouTubePlayer;
-import com.google.android.youtube.player.YouTubePlayerSupportFragment;
 import com.squareup.picasso.Picasso;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-import static com.example.android.moiveapp.BuildConfig.MOVIE_YOUTUBE_API_KEY;
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_COLLECT;
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_MOVIE_ID;
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_MOVIE_NAME;
@@ -103,7 +96,9 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @BindView(R.id.poster)
     ImageView pos;
     @BindView(R.id.button_collection)
-    Button button;
+    CheckBox mCheckBox;
+    @BindView(R.id.video)
+    ImageView videoIm;
     @BindView(R.id.review_one)
     TextView reviewOne;
     @BindView(R.id.review_two)
@@ -111,22 +106,15 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @BindView(R.id.review_three)
     TextView reviewThree;
     Uri mData;
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
     }
-
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        Intent intent = getActivity().getIntent();
-        if (intent == null) {
-            return null;
-        }
-        mData = intent.getData();
         return new CursorLoader(getActivity(),
-                intent.getData(),
+                mData,
                 MOVIE_COLUMNS,
                 null,
                 null,
@@ -138,7 +126,6 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         if (!data.moveToFirst()) {
             return;
         }
-        Log.v("abcde", data.getString(COL_MOVIE_ID));
         String movieName = data.getString(COL_MOVIE_NAME);
         String year = data.getString(COL_YEAR);
         String score = data.getString(COL_SCORE);
@@ -162,28 +149,12 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
         sco.setText(score);
         over.setText(overview);
         Picasso.with(getContext()).load(imagenet).into(pos);
-        YouTubePlayerSupportFragment youTubePlayerFragment = YouTubePlayerSupportFragment.newInstance();
-
-        FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
-        transaction.add(R.id.youtube_layout_one, youTubePlayerFragment)
-                .commit();
-        youTubePlayerFragment.initialize(MOVIE_YOUTUBE_API_KEY, new YouTubePlayer.OnInitializedListener() {
-
+        videoIm.setOnClickListener(new OnClickListener() {
             @Override
-            public void onInitializationSuccess(YouTubePlayer.Provider provider, YouTubePlayer player, boolean wasRestored) {
-                if (!wasRestored) {
-                    player.setPlayerStyle(YouTubePlayer.PlayerStyle.DEFAULT);
-                    player.loadVideo(video[0]);
-                    player.play();
-                }
-            }
-
-            @Override
-            public void onInitializationFailure(YouTubePlayer.Provider provider, YouTubeInitializationResult error) {
-                // YouTube error
-                String errorMessage = error.toString();
-                Toast.makeText(getActivity(), errorMessage, Toast.LENGTH_LONG).show();
-                Log.d("errorMessage:", errorMessage);
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("http://www.youtube.com/watch?v=" + video[0]));
+                startActivity(intent);
             }
         });
     }
@@ -192,31 +163,39 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public void onLoaderReset(Loader<Cursor> cursorLoader) {
 
     }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
         ButterKnife.bind(this, rootView);
-
-        button.setOnClickListener(new OnClickListener() {
+        Intent intent = getActivity().getIntent();
+        mData = intent.getData();
+        Cursor cur = getContext().getContentResolver().query(mData, MOVIE_COLUMNS, null, null, null);
+        if (cur.moveToFirst()) {
+            String select = cur.getString(COL_COLLECT);
+            if (select.equals("0")) {
+                mCheckBox.setChecked(false);
+            } else {
+                mCheckBox.setChecked(true);
+            }
+        }
+        cur.close();
+        mCheckBox.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Cursor cur = getContext().getContentResolver().query(mData, MOVIE_COLUMNS, null, null, null);
-                String movieId = MovieContract.MovieEntry.getDetailFromUri(mData);
-                if (cur.moveToFirst()) {
-                    String select = cur.getString(COL_COLLECT);
-                    if (select.equals("0")) {
+                new Thread(new Runnable() {
+                    public void run() {
+                        String movieId = MovieContract.MovieEntry.getDetailFromUri(mData);
                         ContentValues movieValues = new ContentValues();
-                        movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "1");
-                        getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "0"});
-                    } else {
-                        ContentValues movieValues = new ContentValues();
-                        movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "0");
-                        getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "1"});
+                        if (mCheckBox.isChecked()) {
+                            movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "1");
+                            getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "0"});
+                        } else {
+                            movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "0");
+                            getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "1"});
+                        }
                     }
-                }
+                }).start();
             }
         });
         return rootView;

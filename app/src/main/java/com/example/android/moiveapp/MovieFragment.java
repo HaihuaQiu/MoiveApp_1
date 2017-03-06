@@ -192,21 +192,6 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
             movieTask.execute();
         }
     }
-
-    public void updateCollection() {
-        String orderType;
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String type = prefs.getString(getString(R.string.pref_key),
-                getString(R.string.pref_popular));
-        if (type.equals(getString(R.string.pref_popular))) {
-            orderType = MovieContract.MovieEntry.COLUMN_POPULARITY + " ASC";
-        } else {
-            orderType = MovieContract.MovieEntry.COLUMN_TOPRATE + " ASC";
-        }
-        Cursor cur = getContext().getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, null, MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{"1"}, orderType);
-
-        myAdapter.swapCursor(cur);
-    }
 }
 
 

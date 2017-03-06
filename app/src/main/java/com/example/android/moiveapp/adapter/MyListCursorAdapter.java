@@ -67,7 +67,7 @@ public class MyListCursorAdapter extends CursorRecyclerViewAdapter<MyListCursorA
 
         public void bindData(final Cursor cursor) {
             final String imageNet = cursor.getString(cursor.getColumnIndex(MovieContract.MovieEntry.COLUMN_RESULT_IMAGE));
-            Picasso.with(mLayoutInflater.getContext()).load(imageNet).into(mImageView);
+            Picasso.with(mLayoutInflater.getContext()).load(imageNet).placeholder(R.drawable.ic_download).into(mImageView);
         }
 
         @Override

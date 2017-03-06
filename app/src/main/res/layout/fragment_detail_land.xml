@@ -64,7 +64,7 @@
                     android:textSize="@dimen/text_size_20"
                     tools:text="Titanic4" />
 
-                <Button
+                <CheckBox
                     android:id="@+id/button_collection"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -80,13 +80,13 @@
             </LinearLayout>
         </LinearLayout>
 
-        <FrameLayout
-            android:id="@+id/youtube_layout_one"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_margin="16dp"
-            android:visibility="visible" />
+        <ImageView
+            android:id="@+id/video"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_trailer" />
 
         <TextView
             android:id="@+id/review_one"
