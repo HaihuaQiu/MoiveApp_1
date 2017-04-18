@@ -44,6 +44,7 @@ public class MovieContract {
         public static final String COLUMN_POPULARITY = "popularity";
         public static final String COLUMN_TOPRATE = "top_rate";
         public static final String COLUMN_RESULT_IMAGE = "movie_image";
+        public static final String COLUMN_DATE = "date_time";
         public static final String COLUMN_YEAR = "year";
         public static final String COLUMN_SCORE = "movie_score";
         public static final String COLUMN_OVERVIEW = "movie_overview";

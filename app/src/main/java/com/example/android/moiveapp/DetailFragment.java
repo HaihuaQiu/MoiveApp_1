@@ -15,6 +15,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.example.android.moiveapp.data.MovieContract;
@@ -63,6 +64,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     static final int COL_REVIEW_TWO = 14;
     static final int COL_REVIEW_THREE = 15;
     static final int COL_TIME = 16;
+    static final String DETAIL_URI = "URI";
     private static final int DETAIL_LOADER = 0;
     private static final String[] MOVIE_COLUMNS = {
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
@@ -106,19 +108,35 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     @BindView(R.id.review_three)
     TextView reviewThree;
     Uri mData;
+    private ScrollView scrollView;
+    private int sViewX, sViewY;
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         getLoaderManager().initLoader(DETAIL_LOADER, null, this);
         super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState != null) {
+            sViewX = savedInstanceState.getInt("sViewX");
+            sViewY = savedInstanceState.getInt("sViewY");
+            scrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollView.smoothScrollTo(sViewX, sViewY);
+                }
+            });
+        }
     }
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return new CursorLoader(getActivity(),
+        if (null != mData) {
+            return new CursorLoader(getActivity(),
                 mData,
                 MOVIE_COLUMNS,
                 null,
                 null,
                 null);
+        }
+        return null;
     }
 
     @Override
@@ -157,6 +175,14 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
                 startActivity(intent);
             }
         });
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt("sViewX", scrollView.getScrollX());
+        outState.putInt("sViewY", scrollView.getScrollY());
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -167,38 +193,58 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
+        scrollView = (ScrollView) rootView;
         ButterKnife.bind(this, rootView);
-        Intent intent = getActivity().getIntent();
-        mData = intent.getData();
-        Cursor cur = getContext().getContentResolver().query(mData, MOVIE_COLUMNS, null, null, null);
-        if (cur.moveToFirst()) {
-            String select = cur.getString(COL_COLLECT);
-            if (select.equals("0")) {
-                mCheckBox.setChecked(false);
-            } else {
-                mCheckBox.setChecked(true);
+        Bundle arguments = getArguments();
+        if (arguments != null) {
+            mData = arguments.getParcelable(DetailFragment.DETAIL_URI);
+            Cursor cur = getContext().getContentResolver().query(mData, MOVIE_COLUMNS, null, null, null);
+            if (cur.moveToFirst()) {
+                String select = cur.getString(COL_COLLECT);
+                if (select.equals("0")) {
+                    mCheckBox.setChecked(false);
+                } else {
+                    mCheckBox.setChecked(true);
+                }
             }
-        }
-        cur.close();
-        mCheckBox.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new Thread(new Runnable() {
-                    public void run() {
-                        String movieId = MovieContract.MovieEntry.getDetailFromUri(mData);
-                        ContentValues movieValues = new ContentValues();
-                        if (mCheckBox.isChecked()) {
-                            movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "1");
-                            getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "0"});
-                        } else {
-                            movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "0");
-                            getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "1"});
+            cur.close();
+            mCheckBox.setOnClickListener(new OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    new Thread(new Runnable() {
+                        public void run() {
+                            String movieId = MovieContract.MovieEntry.getDetailFromUri(mData);
+                            ContentValues movieValues = new ContentValues();
+                            if (mCheckBox.isChecked()) {
+                                movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "1");
+                                getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "0"});
+                            } else {
+                                movieValues.put(MovieContract.MovieEntry.COLUMN_COLLECT, "0");
+                                getContext().getContentResolver().update(CONTENT_URI, movieValues, MovieContract.MovieEntry.COLUMN_MOVIE_ID + " = ? AND " + MovieContract.MovieEntry.COLUMN_COLLECT + " = ? ", new String[]{movieId, "1"});
+                            }
                         }
-                    }
-                }).start();
-            }
-        });
+                    }).start();
+                }
+            });
+
+        }
         return rootView;
     }
 
+    void onTypeChanged(String type, int position) {
+        // replace the uri, since the location has changed
+        String orderType;
+        if (type.equals("popular")) {
+            orderType = MovieContract.MovieEntry.COLUMN_POPULARITY + " ASC";
+        } else {
+            orderType = MovieContract.MovieEntry.COLUMN_TOPRATE + " ASC";
+        }
+        Cursor cur = getContext().getContentResolver().query(MovieContract.MovieEntry.CONTENT_URI, MOVIE_COLUMNS, null, null, orderType);
+        if (cur.moveToPosition(position)) {
+            String movieId = cur.getString(COL_MOVIE_ID);
+            Uri updatedUri = MovieContract.MovieEntry.buildMovieWithDetail(movieId);
+            mData = updatedUri;
+            getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+        }
+    }
 }

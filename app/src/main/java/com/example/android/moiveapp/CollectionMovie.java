@@ -115,8 +115,8 @@ public class CollectionMovie extends AppCompatActivity implements LoaderManager.
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportLoaderManager().initLoader(MOVIE_LOADER, null, this);
-        // Add this line in order for this fragment to handle menu events.
-        setContentView(R.layout.fragment);
+        // Add this line in order for this fragment_main to handle menu events.
+        setContentView(R.layout.fragment_main);
         myAdapter = new MyListCursorAdapter(this, null);
         RecyclerView gridview = (RecyclerView) findViewById(R.id.gridview);
         gridview.setAdapter(myAdapter);

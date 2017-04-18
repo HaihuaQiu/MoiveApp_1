@@ -24,7 +24,9 @@ import android.view.ViewGroup;
 
 import com.example.android.moiveapp.adapter.MyListCursorAdapter;
 import com.example.android.moiveapp.data.MovieContract;
+import com.example.android.moiveapp.sync.MovieSyncAdapter;
 
+import static com.example.android.moiveapp.R.id.gridview;
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_COLLECT;
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_MOVIE_ID;
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_MOVIE_NAME;
@@ -65,6 +67,7 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     static final int COL_REVIEW_THREE = 15;
     static final int COL_TIME = 16;
     private static final int MOVIE_LOADER = 0;
+    private static final String SELECTED_KEY = "selected_position";
     private static final String[] MOVIE_COLUMNS = {
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
             COLUMN_MOVIE_NAME,
@@ -85,6 +88,9 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
             COLUMN_TIME
     };
     MyListCursorAdapter myAdapter;
+    private RecyclerView recyclerView;
+    private int mPosition = RecyclerView.NO_POSITION;
+
     public MovieFragment() {
     }
 
@@ -106,6 +112,10 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
             orderType = MovieContract.MovieEntry.COLUMN_TOPRATE + " ASC";
         }
         Uri MovieUri = MovieContract.MovieEntry.CONTENT_URI;
+//        Cursor cur = getActivity().getContentResolver().query(MovieUri, MOVIE_COLUMNS, null,null, orderType);
+//        if (cur.moveToFirst()) {
+//            ((Callback) getActivity()).onItemSelected(MovieContract.MovieEntry.buildMovieWithDetail(cur.getString(MovieFragment.COL_MOVIE_ID)),0);
+//        }
         return new CursorLoader(getActivity(),
                 MovieUri,
                 MOVIE_COLUMNS,
@@ -116,8 +126,12 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
 
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
-        int i = cursor.getCount();
         myAdapter.swapCursor(cursor);
+        if (mPosition != RecyclerView.NO_POSITION) {
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            recyclerView.smoothScrollToPosition(mPosition);
+        }
     }
 
     @Override
@@ -127,7 +141,7 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Add this line in order for this fragment to handle menu events.
+        // Add this line in order for this fragment_main to handle menu events.
         setHasOptionsMenu(true);
     }
 
@@ -147,9 +161,9 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.action_refresh:
-                updateMovie();
-                return true;
+//            case R.id.action_refresh:
+//                updateMovie();
+//                return true;
             case R.id.action_settings:
                 startActivity(new Intent(getActivity(), SettingsActivity.class));
                 return true;
@@ -164,21 +178,29 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         myAdapter = new MyListCursorAdapter(getActivity(), null);
-        View rootView = inflater.inflate(R.layout.fragment, container, false);
-        RecyclerView gridview = (RecyclerView) rootView.findViewById(R.id.gridview);
-        gridview.setAdapter(myAdapter);
-        gridview.setLayoutManager(new GridLayoutManager(getActivity(), 2));
+        View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        recyclerView = (RecyclerView) rootView.findViewById(gridview);
+        recyclerView.setAdapter(myAdapter);
+        recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
         myAdapter.setOnItemClickListener(new MyListCursorAdapter.MyItemClickListener() {
             @Override
-            public void onItemClick(View view, int postion) {
-                Cursor cursor = myAdapter.getItem(postion);
-                Intent launcher = new Intent(getActivity(), DetailActivity.class)
-                        .setData(MovieContract.MovieEntry.buildMovieWithDetail(cursor.getString(COL_MOVIE_ID)));
-                startActivity(launcher);
-
+            public void onItemClick(View view, int position) {
+                Cursor cursor = myAdapter.getItem(position);
+                if (cursor != null) {
+                    ((Callback) getActivity()).onItemSelected(MovieContract.MovieEntry.buildMovieWithDetail(cursor.getString(COL_MOVIE_ID)), position);
+                }
+                mPosition = position;
             }
         });
         return rootView;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (mPosition != RecyclerView.NO_POSITION) {
+            outState.putInt(SELECTED_KEY, mPosition);
+        }
+        super.onSaveInstanceState(outState);
     }
 
     void onOrderChanged() {
@@ -187,10 +209,14 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     }
 
     public void updateMovie() {
-        FetchMovieTask movieTask = new FetchMovieTask(getActivity());
-        if (isOnline()) {
-            movieTask.execute();
-        }
+        MovieSyncAdapter.syncImmediately(getActivity());
+    }
+
+    public interface Callback {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(Uri dateUri, int position);
     }
 }
 

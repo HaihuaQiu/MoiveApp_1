@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.example.android.moiveapp.DetailActivity.DetailFragment">
+    tools:context="com.example.android.moiveapp.DetailFragment">
 
     <LinearLayout
         android:id="@+id/movie_detail"
