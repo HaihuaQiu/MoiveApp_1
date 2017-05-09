@@ -14,4 +14,10 @@
         android:summaryOff="@string/pref_enable_notifications_false"
         android:summaryOn="@string/pref_enable_notifications_true"
         android:title="@string/pref_enable_notifications_label" />
+    <EditTextPreference
+        android:defaultValue="@string/pref_frequency_default"
+        android:inputType="text"
+        android:key="@string/pref_frequency_key"
+        android:singleLine="true"
+        android:title="@string/pref_synchronizing_frequency" />
 </PreferenceScreen>

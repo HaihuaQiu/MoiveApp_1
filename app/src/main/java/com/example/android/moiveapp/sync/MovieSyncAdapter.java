@@ -61,8 +61,6 @@ import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_
 import static com.example.android.moiveapp.data.MovieContract.MovieEntry.COLUMN_YEAR;
 
 public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
-    public static final int SYNC_INTERVAL = 60 * 60 * 24;
-    public static final int SYNC_FLEXTIME = SYNC_INTERVAL / 3;
     static final int COL_ID = 0;
     static final int COL_MOVIE_NAME = 1;
     static final int COL_MOVIE_ID = 2;
@@ -99,6 +97,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
             COLUMN_REVIEW_PARTTHREE,
             COLUMN_TIME
     };
+    private static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
     private static final int NOTIFICATION_ID = 3004;
     public final String LOG_TAG = MovieSyncAdapter.class.getSimpleName();
 
@@ -171,6 +170,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
 
             onAccountCreated(newAccount, context);
         }
+
         return newAccount;
     }
 
@@ -178,7 +178,11 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         /*
          * Since we've created an account
          */
-        MovieSyncAdapter.configurePeriodicSync(context, SYNC_INTERVAL, SYNC_FLEXTIME);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String syncInterval = prefs.getString(context.getString(R.string.pref_frequency_key),
+                context.getString(R.string.pref_frequency_default));
+        MovieSyncAdapter.configurePeriodicSync(context, Integer.parseInt(syncInterval), Integer.parseInt(syncInterval) / 3);
 
         /*
          * Without calling setSyncAutomatically, our periodic sync will not be enabled.
@@ -202,10 +206,21 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
         type[0] = "popular";
         type[1] = "top_rated";
         String pop = "";
-        for (String p : type) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String lastNotificationKey = getContext().getString(R.string.pref_last_notification);
+        long lastSync = prefs.getLong(lastNotificationKey, 0);
+        String syncInterval = prefs.getString(getContext().getString(R.string.pref_frequency_key),
+                getContext().getString(R.string.pref_frequency_default));
+        if (System.currentTimeMillis() - lastSync >= DAY_IN_MILLIS || Integer.parseInt(syncInterval) < 86400) {
+            for (String p : type) {
             pop = p;
             storeData(MOVIE_BASE_URL, pop);
+            }
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putLong(lastNotificationKey, System.currentTimeMillis());
+            editor.commit();
         }
+        notifyMovieChange();
         return;
     }
 
@@ -370,9 +385,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                 getContext().getContentResolver().delete(MovieContract.MovieEntry.CONTENT_URI,
                         MovieContract.MovieEntry.COLUMN_DATE + " <= ?",
                         new String[]{Long.toString(dayTime.setJulianDay(julianStartDay - 1))});
-                notifyMovieChange();
             }
-
             Log.d(LOG_TAG, "FetchMovieTask Complete. " + inserted + " Inserted");
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
@@ -412,6 +425,7 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                                     .setColor(resources.getColor(R.color.cyan))
                                     .setSmallIcon(iconId)
                                     .setLargeIcon(largeIcon)
+                                    .setAutoCancel(true) //点击通知，通知自动消失
                                     .setContentTitle(title)
                                     .setContentText(contentText);
                     Intent resultIntent = new Intent(context, MainActivity.class);
@@ -428,6 +442,10 @@ public class MovieSyncAdapter extends AbstractThreadedSyncAdapter {
                             (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
                     // WEATHER_NOTIFICATION_ID allows you to update the notification later on.
                     mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putString(notificationKey, movieIdNow);
+                    editor.commit();
+                } else if (movieIdPast.equals("")) {
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString(notificationKey, movieIdNow);
                     editor.commit();

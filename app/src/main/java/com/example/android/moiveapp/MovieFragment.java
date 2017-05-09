@@ -68,6 +68,8 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     static final int COL_TIME = 16;
     private static final int MOVIE_LOADER = 0;
     private static final String SELECTED_KEY = "selected_position";
+    private static final String SELECTED_X = "x_shift";
+    private static final String SELECTED_Y = "y_shift";
     private static final String[] MOVIE_COLUMNS = {
             MovieContract.MovieEntry.TABLE_NAME + "." + MovieContract.MovieEntry._ID,
             COLUMN_MOVIE_NAME,
@@ -88,9 +90,10 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
             COLUMN_TIME
     };
     MyListCursorAdapter myAdapter;
+    private int ddx = 0, ddy = 0;
     private RecyclerView recyclerView;
-    private int mPosition = RecyclerView.NO_POSITION;
-
+    //    private int mPosition = RecyclerView.NO_POSITION;
+    private boolean mOrderChange = false;
     public MovieFragment() {
     }
 
@@ -127,10 +130,17 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
     @Override
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         myAdapter.swapCursor(cursor);
-        if (mPosition != RecyclerView.NO_POSITION) {
+        if (mOrderChange) {
+            recyclerView.scrollToPosition(RecyclerView.HORIZONTAL);
+            ddx = ddy = 0;
+            mOrderChange = false;
+
+        }
+        if (ddx != 0 && ddy != 0 && !mOrderChange) {
             // If we don't need to restart the loader, and there's a desired position to restore
             // to, do so now.
-            recyclerView.smoothScrollToPosition(mPosition);
+            recyclerView.scrollTo(ddx, ddy);
+//            recyclerView.smoothScrollToPosition(mPosition);
         }
     }
 
@@ -181,6 +191,14 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         recyclerView = (RecyclerView) rootView.findViewById(gridview);
         recyclerView.setAdapter(myAdapter);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                ddx = dx;
+                ddy = dy;
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 2));
         myAdapter.setOnItemClickListener(new MyListCursorAdapter.MyItemClickListener() {
             @Override
@@ -189,23 +207,31 @@ public class MovieFragment extends Fragment implements LoaderManager.LoaderCallb
                 if (cursor != null) {
                     ((Callback) getActivity()).onItemSelected(MovieContract.MovieEntry.buildMovieWithDetail(cursor.getString(COL_MOVIE_ID)), position);
                 }
-                mPosition = position;
+//                mPosition = position;
             }
         });
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+//            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+            ddx = savedInstanceState.getInt(SELECTED_X);
+            ddy = savedInstanceState.getInt(SELECTED_Y);
+        }
         return rootView;
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if (mPosition != RecyclerView.NO_POSITION) {
-            outState.putInt(SELECTED_KEY, mPosition);
+        if (ddx != 0 && ddy != 0) {
+            outState.putInt(SELECTED_X, ddx);
+            outState.putInt(SELECTED_Y, ddy);
         }
         super.onSaveInstanceState(outState);
     }
 
     void onOrderChanged() {
         updateMovie();
+        mOrderChange = true;
         getLoaderManager().restartLoader(MOVIE_LOADER, null, this);
+
     }
 
     public void updateMovie() {

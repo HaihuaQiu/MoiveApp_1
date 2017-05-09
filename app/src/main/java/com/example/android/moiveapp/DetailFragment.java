@@ -245,6 +245,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
             Uri updatedUri = MovieContract.MovieEntry.buildMovieWithDetail(movieId);
             mData = updatedUri;
             getLoaderManager().restartLoader(DETAIL_LOADER, null, this);
+
         }
     }
 }
